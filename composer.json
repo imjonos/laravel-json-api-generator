@@ -1,5 +1,5 @@
 {
-    "name": "nos/jsonapigenerator",
+    "name": "imjonos/laravel-json-api-generator",
     "description": "JSON API Generator",
     "license": "MIT License",
     "authors": [
