@@ -44,7 +44,7 @@ license. Please see the [license file](license.md) for more information.
 [ico-version]: https://img.shields.io/packagist/v/nos/jsonapigenerator.svg?style=flat-square
 [ico-downloads]: https://img.shields.io/packagist/dt/nos/jsonapigenerator.svg?style=flat-square
 
-[link-packagist]: https://packagist.org/packages/nos/jsonapigenerator
-[link-downloads]: https://packagist.org/packages/nos/jsonapigenerator
+[link-packagist]: https://packagist.org/packages/imjonos/laravel-json-api-generator
+[link-downloads]: https://packagist.org/packages/imjonos/laravel-json-api-generator
 [link-author]: https://github.com/imjonos
 [link-contributors]: ../../contributors
