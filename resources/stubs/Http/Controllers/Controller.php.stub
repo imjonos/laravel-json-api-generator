@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api{{namespacePath}};
 
 use Nos\JsonApiGenerator\Http\Controllers\ApiController;
 use {{modelsNamespace}}{{modelName}};
-use App\Http\Requests{{namespacePath}}\{{modelName}}\{
+use App\Http\Requests\Api{{namespacePath}}\{{modelName}}\{
     IndexRequest,
     StoreRequest,
     UpdateRequest
