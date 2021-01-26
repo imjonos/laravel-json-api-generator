@@ -1,8 +1,8 @@
 # Changelog
 
-All notable changes to `JsonApiGenerator` will be documented in this file.
+All notable changes to `Laravel Json Api Generator` will be documented in this file.
 
-## Version 1.0
+## Version 0.1 alpha
 
 ### Added
-- Everything
+- Base files generating: Controller, Requests, Resources, Routes
