@@ -17,7 +17,7 @@ class {{modelName}}Resource extends ApiResource
         $this->setType('{{modelNamePluralLowerCase}}');
         $attributes = [];
         //By default adding all attributes
-        foreach ($this as $key => $value) {
+        foreach ($this->resource as $key => $value) {
             $attributes[$key] = $value;
         }
         $this->setAttributes($attributes);
