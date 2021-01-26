@@ -16,9 +16,9 @@ class GenerateJsonApiTest extends TestCase
     {
         $this->artisan('jsonApi:generate', ['table' => 'posts', '--force' => 1]);
         $this->assertFileExists(app_path("Http/Controllers/Api/V1/").'PostController.php');
-        $this->assertFileExists(app_path("Http/Resources/Api/V1/").'PostIdentifierResource.php');
-        $this->assertFileExists(app_path("Http/Resources/Api/V1/").'PostRelationshipResource.php');
-        $this->assertFileExists(app_path("Http/Resources/Api/V1/").'PostResource.php');
-        $this->assertFileExists(app_path("Http/Resources/Api/V1/").'PostsResource.php');
+        $this->assertFileExists(app_path("Http/Resources/Api/V1/Post/").'PostIdentifierResource.php');
+        $this->assertFileExists(app_path("Http/Resources/Api/V1/Post/").'PostRelationshipResource.php');
+        $this->assertFileExists(app_path("Http/Resources/Api/V1/Post/").'PostResource.php');
+        $this->assertFileExists(app_path("Http/Resources/Api/V1/Post/").'PostsResource.php');
     }
 }

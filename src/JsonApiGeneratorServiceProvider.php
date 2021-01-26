@@ -76,9 +76,9 @@ class JsonApiGeneratorServiceProvider extends ServiceProvider
         ], 'jsonapigenerator.views');*/
 
         // Publishing the translation files.
-        /*$this->publishes([
+        $this->publishes([
             __DIR__.'/../resources/lang' => resource_path('lang/vendor/nos'),
-        ], 'jsonapigenerator.views');*/
+        ], 'jsonapigenerator.langs');
 
         // Registering package commands.
         // $this->commands([]);

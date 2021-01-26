@@ -70,18 +70,31 @@ class GenerateJsonApi extends Command
         $modelNameLowerCase = Str::lower($modelName);
         $pathName = ($this->route) ? ucfirst($this->route) : '';
         $namespacePath =  ($pathName) ? '\\'.$pathName : '';
+        $customPath =  ($pathName) ? '/'.$pathName : '';
+        $modelsNamespace = config('jsonapigenerator.modelsNamespace');
 
         $this->templateVars = [
             'modelName' => $modelName,
             'modelNamePlural' => $modelNamePlural,
+            'modelsNamespace' => $modelsNamespace,
             'modelNameLowerCase' => $modelNameLowerCase,
             'modelNamePluralLowerCase' => $this->tableName,
             'pathName' => $pathName,
-            'namespacePath' => $namespacePath
+            'namespacePath' => $namespacePath,
+            'customPath' => $customPath
         ];
 
+        $this->info('Json Api Generator');
+        $this->info('Creating controller...');
         $this->controller();
+        $this->info('Creating requests...');
+        $this->requests();
+        $this->info('Creating resources...');
         $this->resources();
+        $this->info('Creating routes');
+        $this->routes();
+        $this->info('Done');
+
     }
 
     /**
@@ -134,10 +147,9 @@ class GenerateJsonApi extends Command
      */
     protected function controller(): void
     {
-        $pathName = $this->templateVars['pathName'];
-        $customPath =  ($pathName) ? $pathName . '/' : '';
+        $customPath =  $this->templateVars['customPath'];
         $singularName = $this->templateVars['modelName'];
-        $path = app_path("Http/Controllers/Api/{$customPath}");
+        $path = app_path("Http/Controllers/Api{$customPath}/");
 
         $controllerTemplate = $this->makeTemplate('Http/Controllers/Controller.php');
 
@@ -151,12 +163,9 @@ class GenerateJsonApi extends Command
      */
     protected function resources():void
     {
-
-
-        $pathName = $this->templateVars['pathName'];
         $modelName = $this->templateVars['modelName'];
         $modelNamePlural = $this->templateVars['modelNamePlural'];
-        $customPath =  ($pathName) ? $pathName . '/' : '';
+        $customPath =  $this->templateVars['customPath'];
 
         $resources = [
             'ModelIdentifierResource' => $modelName.'IdentifierResource',
@@ -165,7 +174,7 @@ class GenerateJsonApi extends Command
             'ModelsResource' => $modelNamePlural.'Resource'
         ];
 
-        $path = app_path("Http/Resources/Api/{$customPath}");
+        $path = app_path("Http/Resources/Api{$customPath}/{$modelName}/");
 
         if (!file_exists($path))
             mkdir($path, 0755, true);
@@ -176,28 +185,53 @@ class GenerateJsonApi extends Command
         }
     }
 
+    /**
+     * Generate resources
+     */
+    protected function requests():void
+    {
+        $modelName = $this->templateVars['modelName'];
+        $customPath =  $this->templateVars['customPath'];
+
+        $requests = [
+            'IndexRequest',
+            'StoreRequest',
+            'UpdateRequest'
+        ];
+
+        $path = app_path("Http/Requests/Api{$customPath}/{$modelName}/");
+
+        if (!file_exists($path))
+            mkdir($path, 0755, true);
+
+        foreach ($requests AS $request){
+            $template = $this->makeTemplate("Http/Requests/{$request}.php");
+            $this->writeToFile($path.$request.".php", $template);
+        }
+    }
+
 
     /**
      * Create the routes
-     * @param string $name
      */
-    protected function routes(string $name): void
+    protected function routes(): void
     {
-        $pathName = ($this->route) ? ucfirst($this->route) : '';
-        $namespacePath =  ($pathName) ? $pathName . '\\' : '';
-        $routesFile = File::get(base_path('routes/web.php'));
-        $singular = $namespacePath . Str::singular($name);
-        $singularLowerCase = strtolower(Str::singular($name));
+        $namespacePath = $this->templateVars['namespacePath'];
+        $modelName = $this->templateVars['modelName'];
+        $modelNameLowerCase = $this->templateVars['modelNameLowerCase'];
         $route = $this->route . "/" . $this->tableName;
+        $routesPath = base_path('routes/api.php');
+
+        $routesFile = File::get($routesPath);
 
         $routes = [
-            "Route::pattern('{$singularLowerCase}', '[0-9]+');",
-            "Route::resource('" . $route . "', '{$singular}Controller');",
+            "Route::pattern('{$modelNameLowerCase}', '[0-9]+');",
+            "Route::resource('" . $route . "', 'App\Http\Controllers\Api" . $namespacePath . "\\". $modelName . "Controller', ['except'=> ['edit', 'create']]);",
         ];
 
         foreach ($routes as $route) {
             if (!stristr($routesFile, $route)) {
-                File::append(base_path('routes/web.php'), $route . PHP_EOL);
+                File::append($routesPath, $route . PHP_EOL);
             }
         }
     }
