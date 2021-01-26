@@ -1,7 +1,7 @@
 {
     "name": "imjonos/laravel-json-api-generator",
     "description": "JSON API Generator",
-    "license": "MIT License",
+    "license": "MIT",
     "authors": [
         {
             "name": "Eugeny Nosenko",
