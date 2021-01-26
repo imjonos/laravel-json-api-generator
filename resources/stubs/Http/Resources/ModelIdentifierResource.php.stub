@@ -1,0 +1,23 @@
+<?php
+namespace App\Http\Resources{{namespacePath}}\{{modelName}};
+
+use Nos\JsonApiGenerator\Http\Resources\ApiResource;
+
+class {{modelName}}IdentifierResource extends ApiResource
+{
+    /**
+     * Transform the resource into an array.
+     *
+     * @param  \Illuminate\Http\Request $request
+     * @return array
+     */
+    public function toArray($request)
+    {
+        $this->setType('{{modelNamePluralLowerCase}}');
+
+        $this->setLinks([
+            'self' => route('{{modelNamePluralLowerCase}}.show',['{{modelNameLowerCase}}' => $this->id])
+        ]);
+        return parent::toArray($request);
+    }
+}

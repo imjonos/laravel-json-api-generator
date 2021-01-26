@@ -1,0 +1,41 @@
+{
+    "name": "nos/jsonapigenerator",
+    "description": "JSON API Generator",
+    "license": "MIT License",
+    "authors": [
+        {
+            "name": "Eugeny Nosenko",
+            "email": "info@toprogram.ru",
+            "homepage": "toprogram.ru"
+        }
+    ],
+    "homepage": "https://github.com/imjonos/laravel-json-api-generator",
+    "keywords": ["Laravel", "JsonApiGenerator"],
+    "require": {
+        "illuminate/support": "~5|~6|~7|~8"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "~7.0|~8.0|~9.0",
+        "orchestra/testbench": "~5|~6"
+    },
+    "autoload": {
+        "psr-4": {
+            "Nos\\JsonApiGenerator\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Nos\\JsonApiGenerator\\Tests\\": "tests"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Nos\\JsonApiGenerator\\JsonApiGeneratorServiceProvider"
+            ],
+            "aliases": {
+                "JsonApiGenerator": "Nos\\JsonApiGenerator\\Facades\\JsonApiGenerator"
+            }
+        }
+    }
+}

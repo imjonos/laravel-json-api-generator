@@ -1,0 +1,32 @@
+<?php
+namespace App\Http\Resources{{namespacePath}}\{{modelName}};
+
+use Nos\JsonApiGenerator\Http\Resources\ApiResource;
+use Carbon\Carbon;
+
+class {{modelName}}Resource extends ApiResource
+{
+    /**
+     * Transform the resource into an array.
+     *
+     * @param  \Illuminate\Http\Request $request
+     * @return array
+     */
+    public function toArray($request)
+    {
+        $this->setType('{{modelNamePluralLowerCase}}');
+        $attributes = [];
+        //By default adding all attributes
+        foreach ($this as $key => $value) {
+            $attributes[$key] = $value;
+        }
+        $this->setAttributes($attributes);
+        $this->setLinks([
+            'self' => route('{{modelNamePluralLowerCase}}.show',['{{modelNameLowerCase}}' => $this->id])
+        ]);
+
+        // later need to add relationships
+
+        return parent::toArray($request);
+    }
+}

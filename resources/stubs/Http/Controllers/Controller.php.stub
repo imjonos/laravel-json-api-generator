@@ -1,0 +1,83 @@
+<?php
+
+namespace App\Http\Controllers\Api{{namespacePath}};
+
+use Nos\JsonApiGenerator\Http\Controllers\ApiController;
+use App\Models\{{modelName}};
+use App\Http\Requests{{namespacePath}}\{{modelName}}\{
+    IndexRequest,
+    StoreRequest,
+    UpdateRequest
+};
+use App\Http\Resources\Api{{namespacePath}}\{{modelName}}\{
+    {{modelName}}Resource,
+    {{modelNamePlural}}Resource
+};
+
+class {{modelName}}Controller extends ApiController
+{
+    /**
+     * @var int
+     */
+    public int $perPage = 10;
+
+    /**
+     * Display a listing of the resource.
+     *
+     * @param IndexRequest $request
+     * @return {{modelNamePlural}}Resource
+     */
+    public function index(IndexRequest $request)
+    {
+        $pageSize = $request->input('page.size', $this->perPage);
+        $pageNumber = $request->input('page.number', 1);
+        $result =  {{modelName}}::paginate($pageSize, '*', 'page', $pageNumber);
+
+        return new {{modelNamePlural}}Resource($result);
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  StoreRequest  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store(StoreRequest $request)
+    {
+        //
+    }
+
+    /**
+     * Display the specified resource.
+     *
+     * @param {{modelName}} ${{modelNameLowerCase}}
+     * @return {{modelName}}Resource
+     */
+    public function show({{modelName}} ${{modelNameLowerCase}})
+    {
+        return new {{modelName}}Resource(${{modelNameLowerCase}});
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  UpdateRequest $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function update(UpdateRequest $request, $id)
+    {
+        //
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy($id)
+    {
+        //
+    }
+}

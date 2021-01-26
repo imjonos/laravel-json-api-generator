@@ -1,0 +1,35 @@
+<?php
+namespace App\Http\Resources{{namespacePath}}\{{modelName}};
+
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\ResourceCollection;
+
+class {{modelNamePlural}}Resource extends ResourceCollection
+{
+    /**
+     * Transform the resource collection into an array.
+     *
+     * @param  Request  $request
+     * @return array
+     */
+    public function toArray($request):array
+    {
+        return [
+            'data' => {{modelName}}Resource::collection($this->collection),
+        ];
+    }
+
+    /**
+     * @param Request $request
+     * @return array
+     */
+    public function with($request)
+    {
+
+        return [
+            'links'    => [
+                'self' => route('{{modelNamePluralLowerCase}}.index'),
+            ]
+        ];
+    }
+}
