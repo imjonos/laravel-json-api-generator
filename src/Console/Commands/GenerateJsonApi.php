@@ -91,8 +91,10 @@ class GenerateJsonApi extends Command
         $this->requests();
         $this->info('Creating resources...');
         $this->resources();
-        $this->info('Creating routes');
+        $this->info('Creating routes...');
         $this->routes();
+        $this->info('Creating test...');
+        $this->test();
         $this->info('Done');
 
     }
@@ -208,6 +210,22 @@ class GenerateJsonApi extends Command
             $template = $this->makeTemplate("Http/Requests/{$request}.php");
             $this->writeToFile($path.$request.".php", $template);
         }
+    }
+
+    /**
+     * Create the controller test
+     */
+    protected function test(): void
+    {
+        $customPath =  $this->templateVars['customPath'];
+        $singularName = $this->templateVars['modelName'];
+        $path = base_path("tests/Feature/Api{$customPath}/");
+
+        $testTemplate = $this->makeTemplate('Tests/Feature/Test.php');
+
+        if (!file_exists($path))
+            mkdir($path, 0755, true);
+        $this->writeToFile("$path{$singularName}ControllerTest.php", $testTemplate);
     }
 
 

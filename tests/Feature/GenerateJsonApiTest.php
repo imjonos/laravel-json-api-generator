@@ -23,5 +23,6 @@ class GenerateJsonApiTest extends TestCase
         $this->assertFileExists(app_path("Http/Requests/Api/V1/Post/").'IndexRequest.php');
         $this->assertFileExists(app_path("Http/Requests/Api/V1/Post/").'StoreRequest.php');
         $this->assertFileExists(app_path("Http/Requests/Api/V1/Post/").'UpdateRequest.php');
+        $this->assertFileExists(base_path("tests/Feature/Api/V1/").'PostControllerTest.php');
     }
 }

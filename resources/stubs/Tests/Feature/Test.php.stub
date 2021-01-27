@@ -1,0 +1,22 @@
+<?php
+
+namespace Tests\Feature\Api{{namespacePath}};
+
+use Tests\TestCase;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\WithoutMiddleware;
+
+class {{modelName}}ControllerTest extends TestCase
+{
+    use WithoutMiddleware;
+
+    /**
+     * {{modelName}}Controller@index test
+     *
+     * @return void
+     */
+    public function testIndex()
+    {
+        $this->assertTrue(true);
+    }
+}
