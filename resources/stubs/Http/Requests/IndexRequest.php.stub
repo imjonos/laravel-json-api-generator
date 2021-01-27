@@ -24,6 +24,9 @@ class IndexRequest extends FormRequest
     public function rules()
     {
         return [
+            'filter' => 'array',
+            'page.size' => 'numeric',
+            'page.number' => 'numeric'
         ];
     }
 }
