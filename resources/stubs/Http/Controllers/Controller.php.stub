@@ -24,11 +24,11 @@ class {{modelName}}Controller extends ApiController
     /**
      * Display a listing of the resource.
      *
-     * @queryParam  filter array
+     * @bodyParam  filter array
      *
-     * @queryParam  page array
-     * @queryParam  page.size numeric
-     * @queryParam  page.number numeric
+     * @bodyParam  page array
+     * @bodyParam  page.size numeric
+     * @bodyParam  page.number numeric
      *
      * @param IndexRequest $request
      * @return {{modelNamePlural}}Resource
