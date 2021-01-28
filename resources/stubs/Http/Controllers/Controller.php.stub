@@ -71,7 +71,7 @@ class {{modelName}}Controller extends ApiController
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(UpdateRequest $request, $id): \Illuminate\Http\Response
+    public function update(UpdateRequest $request, int $id): \Illuminate\Http\Response
     {
         //
     }
@@ -82,7 +82,7 @@ class {{modelName}}Controller extends ApiController
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id): \Illuminate\Http\Response
+    public function destroy(int $id): \Illuminate\Http\Response
     {
         //
     }
