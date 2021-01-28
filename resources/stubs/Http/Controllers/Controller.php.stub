@@ -33,7 +33,7 @@ class {{modelName}}Controller extends ApiController
      * @param IndexRequest $request
      * @return {{modelNamePlural}}Resource
      */
-    public function index(IndexRequest $request)
+    public function index(IndexRequest $request): {{modelNamePlural}}Resource
     {
         $pageSize = $request->input('page.size', $this->perPage);
         $pageNumber = $request->input('page.number', 1);
@@ -48,7 +48,7 @@ class {{modelName}}Controller extends ApiController
      * @param  StoreRequest  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(StoreRequest $request)
+    public function store(StoreRequest $request): \Illuminate\Http\Response
     {
         //
     }
@@ -59,7 +59,7 @@ class {{modelName}}Controller extends ApiController
      * @param {{modelName}} ${{modelNameLowerCase}}
      * @return {{modelName}}Resource
      */
-    public function show({{modelName}} ${{modelNameLowerCase}})
+    public function show({{modelName}} ${{modelNameLowerCase}}): {{modelName}}Resource
     {
         return new {{modelName}}Resource(${{modelNameLowerCase}});
     }
@@ -71,7 +71,7 @@ class {{modelName}}Controller extends ApiController
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(UpdateRequest $request, $id)
+    public function update(UpdateRequest $request, $id): \Illuminate\Http\Response
     {
         //
     }
@@ -82,7 +82,7 @@ class {{modelName}}Controller extends ApiController
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy($id): \Illuminate\Http\Response
     {
         //
     }
