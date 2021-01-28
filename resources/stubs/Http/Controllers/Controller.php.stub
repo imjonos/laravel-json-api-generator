@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api{{namespacePath}};
 
+use Illuminate\Pagination\Paginator;
 use Nos\JsonApiGenerator\Http\Controllers\ApiController;
 use {{modelsNamespace}}{{modelName}};
 use App\Http\Requests\Api{{namespacePath}}\{{modelName}}\{
