@@ -15,11 +15,11 @@ class {{modelName}}Resource extends ApiResource
     public function toArray($request)
     {
         $this->setType('{{modelNamePluralLowerCase}}');
-        $attributes = [];
+        $attributes = [
+            'title' => 'Title',
+            'description' => 'Some description'
+        ];
         //By default adding all attributes
-        foreach ($this->resource as $key => $value) {
-            $attributes[$key] = $value;
-        }
         $this->setAttributes($attributes);
         $this->setLinks([
             'self' => route('{{modelNamePluralLowerCase}}.show',['{{modelNameLowerCase}}' => $this->id])
