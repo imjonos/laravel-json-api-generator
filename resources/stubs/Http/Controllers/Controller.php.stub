@@ -37,7 +37,12 @@ class {{modelName}}Controller extends ApiController
     {
         $pageSize = $request->input('page.size', $this->perPage);
         $pageNumber = $request->input('page.number', 1);
-        $result =  {{modelName}}::paginate($pageSize, '*', 'page', $pageNumber);
+        
+        Paginator::currentPageResolver(function () use ($pageNumber) {
+            return $pageNumber;
+        });
+        
+        $result =  {{modelName}}::paginate($pageSize);
 
         return new {{modelNamePlural}}Resource($result);
     }
