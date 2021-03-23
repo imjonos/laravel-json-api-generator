@@ -15,6 +15,10 @@ $ composer require imjonos/laravel-json-api-generator
 
 ## Usage
 
+jsonApi:generate {table : Table name from DB} {--route=v1} {--force=0}
+
+php artisan jsonApi:generate posts
+
 ## Change log
 
 Please see the [changelog](changelog.md) for more information on what has changed recently.
