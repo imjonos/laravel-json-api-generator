@@ -77,7 +77,7 @@ class {{modelName}}Controller extends ApiController
         $relationshipsToMany = $this->getDataWithRelationshipsToMany($request);
         ${{modelNameLowerCase}} = {{modelName}}::create($relationshipsToOne);
         foreach ($relationshipsToMany AS $key => $relation){
-            $${{modelNameLowerCase}}->{$key}()->sync($relation);
+            ${{modelNameLowerCase}}->{$key}()->sync($relation);
         }
         return response()->json([], 204);
     }
