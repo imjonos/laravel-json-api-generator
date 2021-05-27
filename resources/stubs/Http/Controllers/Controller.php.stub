@@ -69,9 +69,9 @@ class {{modelName}}Controller extends ApiController
      * Store a newly created resource in storage.
      *
      * @param  StoreRequest  $request
-     * @return \Illuminate\Http\Response
+     * @return {{modelName}}Resource
      */
-    public function store(StoreRequest $request): \Illuminate\Http\Response
+    public function store(StoreRequest $request): {{modelName}}Resource
     {
         $relationshipsToOne = $this->getDataWithRelationshipsToOne($request);
         $relationshipsToMany = $this->getDataWithRelationshipsToMany($request);
@@ -79,7 +79,7 @@ class {{modelName}}Controller extends ApiController
         foreach ($relationshipsToMany AS $key => $relation){
             $${{modelNameLowerCase}}->{$key}()->sync($relation);
         }
-        return new {{modelName}}Resource(${{modelNameLowerCase}}->fresh());
+        return new {{modelName}}Resource(${{modelNameLowerCase}});
     }
 
     /**
@@ -98,9 +98,9 @@ class {{modelName}}Controller extends ApiController
      *
      * @param  UpdateRequest $request
      * @param {{modelName}} ${{modelNameLowerCase}}
-     * @return \Illuminate\Http\Response
+     * @return {{modelName}}Resource
      */
-    public function update(UpdateRequest $request, {{modelName}} ${{modelNameLowerCase}}): \Illuminate\Http\Response
+    public function update(UpdateRequest $request, {{modelName}} ${{modelNameLowerCase}}): {{modelName}}Resource
     {
         $relationshipsToOne = $this->getDataWithRelationshipsToOne($request);
         $relationshipsToMany = $this->getDataWithRelationshipsToMany($request);
@@ -115,11 +115,12 @@ class {{modelName}}Controller extends ApiController
     /**
      * Remove the specified resource from storage.
      *
-     * @param  int  $id
+     * @param {{modelName}} ${{modelNameLowerCase}}
      * @return \Illuminate\Http\Response
      */
-    public function destroy(int $id): \Illuminate\Http\Response
+    public function destroy({{modelName}} ${{modelNameLowerCase}}): \Illuminate\Http\Response
     {
-        //
+        ${{modelNameLowerCase}}->delete();
+        return response()->json([], 204);
     }
 }
