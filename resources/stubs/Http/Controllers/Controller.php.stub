@@ -69,9 +69,9 @@ class {{modelName}}Controller extends ApiController
      * Store a newly created resource in storage.
      *
      * @param  StoreRequest  $request
-     * @return {{modelName}}Resource
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function store(StoreRequest $request): {{modelName}}Resource
+    public function store(StoreRequest $request): \Illuminate\Http\JsonResponse
     {
         $relationshipsToOne = $this->getDataWithRelationshipsToOne($request);
         $relationshipsToMany = $this->getDataWithRelationshipsToMany($request);
@@ -79,7 +79,7 @@ class {{modelName}}Controller extends ApiController
         foreach ($relationshipsToMany AS $key => $relation){
             $${{modelNameLowerCase}}->{$key}()->sync($relation);
         }
-        return new {{modelName}}Resource(${{modelNameLowerCase}});
+        return response()->json([], 204);
     }
 
     /**
