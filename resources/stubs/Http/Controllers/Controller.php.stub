@@ -21,6 +21,23 @@ class {{modelName}}Controller extends ApiController
      * @var int
      */
     public int $perPage = 10;
+    
+    
+    /**
+     * {{modelName}}Controller constructor.
+     * 
+     * Example of array
+     * 'city' => [
+     *     'class' => City::class,
+     *     'type' => 'cities',
+     *     'key' => 'city_id'
+     *  ]
+     */
+    public function __construct()
+    {
+        $this->setToOneRelationships([]);
+        $this->setToManyRelationships([]);
+    }
 
     /**
      * Display a listing of the resource.
@@ -56,7 +73,13 @@ class {{modelName}}Controller extends ApiController
      */
     public function store(StoreRequest $request): \Illuminate\Http\Response
     {
-        //
+        $relationshipsToOne = $this->getDataWithRelationshipsToOne($request);
+        $relationshipsToMany = $this->getDataWithRelationshipsToMany($request);
+        ${{modelNameLowerCase}} = {{modelName}}::create($relationshipsToOne);
+        foreach ($relationshipsToMany AS $key => $relation){
+            $${{modelNameLowerCase}}->{$key}()->sync($relation);
+        }
+        return new {{modelName}}Resource(${{modelNameLowerCase}}->fresh());
     }
 
     /**
@@ -74,12 +97,19 @@ class {{modelName}}Controller extends ApiController
      * Update the specified resource in storage.
      *
      * @param  UpdateRequest $request
-     * @param  int  $id
+     * @param {{modelName}} ${{modelNameLowerCase}}
      * @return \Illuminate\Http\Response
      */
-    public function update(UpdateRequest $request, int $id): \Illuminate\Http\Response
+    public function update(UpdateRequest $request, {{modelName}} ${{modelNameLowerCase}}): \Illuminate\Http\Response
     {
-        //
+        $relationshipsToOne = $this->getDataWithRelationshipsToOne($request);
+        $relationshipsToMany = $this->getDataWithRelationshipsToMany($request);
+        ${{modelNameLowerCase}}->update($relationshipsToOne);
+        foreach ($relationshipsToMany AS $key => $relation){
+            $${{modelNameLowerCase}}->{$key}()->sync($relation);
+        }
+
+        return new {{modelName}}Resource(${{modelNameLowerCase}}->fresh());
     }
 
     /**
