@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Exceptions;
+namespace Nos\JsonApiGenerator\Exceptions;
 
 use Nos\JsonApiGenerator\Exceptions\ApiException;
 
