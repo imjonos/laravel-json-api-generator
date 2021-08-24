@@ -244,7 +244,7 @@ class GenerateJsonApi extends Command
 
         $routes = [
             "Route::pattern('{$modelNameLowerCase}', '[0-9]+');",
-            "Route::resource('" . $route . "', 'Api" . $namespacePath . "\\". $modelName . "Controller', ['except'=> ['edit', 'create']]);",
+            "Route::resource('" . $route . "', \App\Http\Controllers\Api" . $namespacePath . "\\". $modelName . "Controller::class, ['except'=> ['edit', 'create']]);",
         ];
 
         foreach ($routes as $route) {
