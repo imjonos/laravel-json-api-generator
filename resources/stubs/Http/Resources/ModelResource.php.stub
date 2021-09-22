@@ -16,7 +16,7 @@ class {{modelName}}Resource extends ApiResource
     {
         $this->setType('{{modelNamePluralLowerCase}}');
         $attributes = [
-            {{attributes}}
+{{attributes}}
         ];
         //By default adding all attributes
         $this->setAttributes($attributes);

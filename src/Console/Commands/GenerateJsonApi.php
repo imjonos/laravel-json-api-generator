@@ -187,9 +187,11 @@ class GenerateJsonApi extends Command
         if (!file_exists($path))
             mkdir($path, 0755, true);
 
-        $attributes = PHP_EOL;
+        $attributes = '';
         foreach ($this->getColumns() as $column) {
-            $attributes .= '\''.$column['name'].'\' => $this->'.$column['name'].PHP_EOL;
+            if($column['name']!=='id') {
+                $attributes .= '                \'' . $column['name'] . '\' => $this->' . $column['name'] . ',' . PHP_EOL;
+            }
         }
 
         $this->templateVars['attributes'] = $attributes;
@@ -221,9 +223,13 @@ class GenerateJsonApi extends Command
 
         foreach ($requests as $request) {
             $rules = '[' . PHP_EOL;
+            $rules .= '             \'data\' => \'required|array\',' . PHP_EOL;
+            $rules .= '             \'data.type\' => [\'required\', Rule::in([\''.$this->tableName.'\'])],' . PHP_EOL;
+            $rules .= '             \'data.attributes\' => \'array\',' . PHP_EOL;
+
             foreach ($this->getColumns() as $column) {
                 if (isset($column['rules'][$request])) {
-                    $rules .= '             \'attributes.'.$column['name']. '\' => \'' . $column['rules'][$request] . '\',' . PHP_EOL;
+                    $rules .= '             \'data.attributes.'.$column['name']. '\' => \'' . $column['rules'][$request] . '\',' . PHP_EOL;
                 }
             }
             $rules .= '        ]';
