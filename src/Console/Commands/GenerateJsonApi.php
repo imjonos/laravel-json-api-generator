@@ -3,6 +3,7 @@
 namespace Nos\JsonApiGenerator\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
@@ -14,7 +15,7 @@ class GenerateJsonApi extends Command
      *
      * @var string
      */
-    protected $signature = 'jsonApi:generate {table : Table name from DB} {--route=v1} {--force=0}';
+    protected $signature = 'json-api:generate {table : Table name from DB} {--route=v1} {--force=0}';
 
     /**
      * The console command description.
@@ -43,6 +44,11 @@ class GenerateJsonApi extends Command
      */
     protected array $templateVars = [];
 
+    /**
+     * @var ?Collection
+     */
+    protected ?Collection $columns = null;
+
 
     /**
      * Create a new command instance.
@@ -61,7 +67,7 @@ class GenerateJsonApi extends Command
      */
     public function handle()
     {
-        $this->tableName = $this->argument('table');
+        $this->tableName = Str::lower($this->argument('table'));
         $this->route = $this->option('route');
         $this->force = $this->option('force');
 
@@ -69,8 +75,8 @@ class GenerateJsonApi extends Command
         $modelName = Str::singular($modelNamePlural);
         $modelNameLowerCase = Str::lower($modelName);
         $pathName = ($this->route) ? ucfirst($this->route) : '';
-        $namespacePath =  ($pathName) ? '\\'.$pathName : '';
-        $customPath =  ($pathName) ? '/'.$pathName : '';
+        $namespacePath = ($pathName) ? '\\' . $pathName : '';
+        $customPath = ($pathName) ? '/' . $pathName : '';
         $modelsNamespace = config('jsonapigenerator.modelsNamespace');
 
         $this->templateVars = [
@@ -132,7 +138,7 @@ class GenerateJsonApi extends Command
         $keys = [];
         $vars = [];
 
-        foreach ($this->templateVars AS $key => $value){
+        foreach ($this->templateVars as $key => $value) {
             $keys[] = "{{{$key}}}";
             $vars[] = $value;
         }
@@ -149,7 +155,7 @@ class GenerateJsonApi extends Command
      */
     protected function controller(): void
     {
-        $customPath =  $this->templateVars['customPath'];
+        $customPath = $this->templateVars['customPath'];
         $singularName = $this->templateVars['modelName'];
         $path = app_path("Http/Controllers/Api{$customPath}/");
 
@@ -163,17 +169,17 @@ class GenerateJsonApi extends Command
     /**
      * Generate resources
      */
-    protected function resources():void
+    protected function resources(): void
     {
         $modelName = $this->templateVars['modelName'];
         $modelNamePlural = $this->templateVars['modelNamePlural'];
-        $customPath =  $this->templateVars['customPath'];
+        $customPath = $this->templateVars['customPath'];
 
         $resources = [
-            'ModelIdentifierResource' => $modelName.'IdentifierResource',
-            'ModelRelationshipResource' => $modelName.'RelationshipResource',
-            'ModelResource' => $modelName.'Resource',
-            'ModelsResource' => $modelNamePlural.'Resource'
+            'ModelIdentifierResource' => $modelName . 'IdentifierResource',
+            'ModelRelationshipResource' => $modelName . 'RelationshipResource',
+            'ModelResource' => $modelName . 'Resource',
+            'ModelsResource' => $modelNamePlural . 'Resource'
         ];
 
         $path = app_path("Http/Resources/Api{$customPath}/{$modelName}/");
@@ -181,19 +187,26 @@ class GenerateJsonApi extends Command
         if (!file_exists($path))
             mkdir($path, 0755, true);
 
-        foreach ($resources AS $key => $resource){
+        $attributes = PHP_EOL;
+        foreach ($this->getColumns() as $column) {
+            $attributes .= '\''.$column['name'].'\' => $this->'.$column['name'].PHP_EOL;
+        }
+
+        $this->templateVars['attributes'] = $attributes;
+
+        foreach ($resources as $key => $resource) {
             $template = $this->makeTemplate("Http/Resources/{$key}.php");
-            $this->writeToFile($path.$resource.".php", $template);
+            $this->writeToFile($path . $resource . ".php", $template);
         }
     }
 
     /**
      * Generate resources
      */
-    protected function requests():void
+    protected function requests(): void
     {
         $modelName = $this->templateVars['modelName'];
-        $customPath =  $this->templateVars['customPath'];
+        $customPath = $this->templateVars['customPath'];
 
         $requests = [
             'IndexRequest',
@@ -206,9 +219,18 @@ class GenerateJsonApi extends Command
         if (!file_exists($path))
             mkdir($path, 0755, true);
 
-        foreach ($requests AS $request){
+        foreach ($requests as $request) {
+            $rules = '[' . PHP_EOL;
+            foreach ($this->getColumns() as $column) {
+                if (isset($column['rules'][$request])) {
+                    $rules .= '             \'attributes.'.$column['name']. '\' => \'' . $column['rules'][$request] . '\',' . PHP_EOL;
+                }
+            }
+            $rules .= '        ]';
+            $this->templateVars['rules'] = $rules;
+
             $template = $this->makeTemplate("Http/Requests/{$request}.php");
-            $this->writeToFile($path.$request.".php", $template);
+            $this->writeToFile($path . $request . ".php", $template);
         }
     }
 
@@ -217,7 +239,7 @@ class GenerateJsonApi extends Command
      */
     protected function test(): void
     {
-        $customPath =  $this->templateVars['customPath'];
+        $customPath = $this->templateVars['customPath'];
         $singularName = $this->templateVars['modelName'];
         $path = base_path("tests/Feature/Api{$customPath}/");
 
@@ -244,7 +266,7 @@ class GenerateJsonApi extends Command
 
         $routes = [
             "Route::pattern('{$modelNameLowerCase}', '[0-9]+');",
-            "Route::resource('" . $route . "', \App\Http\Controllers\Api" . $namespacePath . "\\". $modelName . "Controller::class, ['except'=> ['edit', 'create']]);",
+            "Route::resource('" . $route . "', \App\Http\Controllers\Api" . $namespacePath . "\\" . $modelName . "Controller::class, ['except'=> ['edit', 'create']]);",
         ];
 
         foreach ($routes as $route) {
@@ -252,5 +274,164 @@ class GenerateJsonApi extends Command
                 File::append($routesPath, $route . PHP_EOL);
             }
         }
+    }
+
+
+    /**
+     * Get columns list from db
+     *
+     * @param string $tableName
+     * @return Collection
+     */
+    protected function getColumns(string $tableName = ""): Collection
+    {
+        if (!$this->columns) {
+            $excludedColumns = ['id', 'created_at', 'updated_at', 'deleted_at', 'remember_token'];
+            if (!$tableName) $tableName = $this->tableName;
+            $indexes = collect(Schema::getConnection()->getDoctrineSchemaManager()->listTableIndexes($tableName));
+            $foreign = Schema::getConnection()->getDoctrineSchemaManager()->listTableForeignKeys($tableName);
+            $columns = Schema::getColumnListing($tableName);
+            $result = [];
+            foreach ($columns as $column) {
+                $unique = false;
+                foreach ($indexes as $index) {
+                    if (in_array($column, $index->getColumns()) && ($index->isUnique() && !$index->isPrimary())) {
+                        $unique = true;
+                    }
+                }
+                $forKey = '';
+                foreach ($foreign as $fkey) {
+                    if (in_array($column, $fkey->getLocalColumns())) {
+                        $forKey = $fkey->getForeignTableName() . '.' . $fkey->getForeignColumns()[0];
+                    }
+                }
+                $result[$column] = [
+                    'name' => $column,
+                    'type' => Schema::getColumnType($tableName, $column),
+                    'required' => boolval(Schema::getConnection()->getDoctrineColumn($tableName, $column)->getNotnull()),
+                    'unique' => $unique,
+                    'foreign' => $forKey,
+                ];
+
+
+                if (!in_array($column, $excludedColumns)) {
+                    $result[$column]['rules'] = [
+                        'StoreRequest' => $this->generateStoreRules($result[$column]),
+                        'UpdateRequest' => $this->generateUpdateRules($result[$column])
+                    ];
+                }
+            }
+            $this->columns = collect($result);
+        }
+        return $this->columns;
+    }
+
+    /**
+     * Generate rules Store action
+     *
+     * @param $column array
+     * @return string
+     */
+    protected function generateStoreRules(array $column): string
+    {
+        $result = [];
+        if ($column['required']) {
+            $result[] = 'required';
+        } else {
+            $result[] = 'nullable';
+        }
+        if ($column['name'] == 'email') {
+            $result[] = 'email';
+        }
+        if ($column['name'] == 'password') {
+            $result[] = 'min:7|confirmed|regex:/^.*(?=.{3,})(?=.*[a-zA-Z])(?=.*[0-9]).*$/';
+        }
+        if ($column['unique'] || $column['name'] == 'slug') {
+            $result[] = 'unique:' . $this->tableName . ',' . $column['name'];
+        }
+        $result = $this->getTypeSpecificRules($column, $result);
+
+        return implode('|', $result);
+    }
+
+    /**
+     *  Generate rules Update action
+     *
+     * @param $column array
+     * @return string
+     */
+    protected function generateUpdateRules(array $column): string
+    {
+        $result = [];
+        if ($column['required']) {
+            $result[] = 'sometimes';
+        } else {
+            $result[] = 'nullable';
+        }
+        if ($column['name'] == 'email') {
+            $result[] = 'email';
+        }
+        if ($column['name'] == 'password') {
+            $result[] = 'min:7|confirmed|regex:/^.*(?=.{3,})(?=.*[a-zA-Z])(?=.*[0-9]).*$/';
+        }
+        if ($column['unique'] || $column['name'] == 'slug') {
+            $result[] = 'unique:' . $this->tableName . ',' . $column['name'] . ',\' . $this->id .\'';
+        }
+        $result = $this->getTypeSpecificRules($column, $result);
+
+        return implode('|', $result);
+    }
+
+    /**
+     * Add column type specific rules
+     *
+     * @param array $column
+     * @param array $rules
+     * @return array
+     */
+    protected function getTypeSpecificRules(array $column, array $rules): array
+    {
+        $integerTypes = [
+            'integer',
+            'tinyint',
+            'smallint',
+            'mediumint',
+            'bigint',
+            'unsignedInteger',
+            'unsignedTinyInteger',
+            'unsignedSmallInteger',
+            'unsignedMediumInteger',
+            'unsignedBigInteger'
+        ];
+        $numericTypes = [
+            'float',
+            'decimal',
+        ];
+        $datetimeTypes = [
+            'datetime',
+            'date',
+            'timestamp'
+        ];
+        $stringTypes = [
+            'string',
+            'varchar',
+            'text'
+        ];
+        if (in_array($column['type'], $integerTypes)) {
+            $rules[] = 'integer';
+        } else if (in_array($column['type'], $numericTypes)) {
+            $rules[] = 'numeric';
+        } else if (in_array($column['type'], $datetimeTypes)) {
+            $rules[] = 'date_format:Y-m-d H:i:s';
+        } else if (in_array($column['type'], $stringTypes)) {
+            $rules[] = 'string';
+        } else if ($column['type'] === 'time') {
+            $rules[] = 'date_format:H:i:s';
+        } else if ($column['type'] === 'boolean') {
+            $rules[] = 'boolean';
+        } else {
+            $rules[] = 'string';
+        }
+        return $rules;
     }
 }
