@@ -8,8 +8,14 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 
+/**
+ * PHP LEFT MARGIN
+ */
+define('PHP_MARGIN', '    ');
+
 class GenerateJsonApi extends Command
 {
+
     /**
      * The name and signature of the console command.
      *
@@ -101,6 +107,10 @@ class GenerateJsonApi extends Command
         $this->routes();
         $this->info('Creating test...');
         $this->test();
+        $this->info('Creating factory...');
+        $this->factory();
+        $this->info('Creating seed...');
+        $this->seed();
         $this->info('Done');
 
     }
@@ -189,8 +199,8 @@ class GenerateJsonApi extends Command
 
         $attributes = '';
         foreach ($this->getColumns() as $column) {
-            if($column['name']!=='id') {
-                $attributes .= '                \'' . $column['name'] . '\' => $this->' . $column['name'] . ',' . PHP_EOL;
+            if ($column['name'] !== 'id') {
+                $attributes .= PHP_MARGIN.PHP_MARGIN.PHP_MARGIN.'\'' . $column['name'] . '\' => $this->' . $column['name'] . ',' . PHP_EOL;
             }
         }
 
@@ -223,13 +233,14 @@ class GenerateJsonApi extends Command
 
         foreach ($requests as $request) {
             $rules = '[' . PHP_EOL;
-            $rules .= '             \'data\' => \'required|array\',' . PHP_EOL;
-            $rules .= '             \'data.type\' => [\'required\', Rule::in([\''.$this->tableName.'\'])],' . PHP_EOL;
-            $rules .= '             \'data.attributes\' => \'array\',' . PHP_EOL;
+            $rules .= PHP_MARGIN.PHP_MARGIN.PHP_MARGIN.'\'data\' => \'required|array\',' . PHP_EOL;
+            $rules .= PHP_MARGIN.PHP_MARGIN.PHP_MARGIN.'\'data.type\' => [\'required\', Rule::in([\'' . $this->tableName . '\'])],' . PHP_EOL;
+            if($request !== 'StoreRequest') $rules .= PHP_MARGIN.PHP_MARGIN.PHP_MARGIN.'\'data.id\' => \'integer\',' . PHP_EOL;
+            $rules .= PHP_MARGIN.PHP_MARGIN.PHP_MARGIN.'\'data.attributes\' => \'array\',' . PHP_EOL;
 
             foreach ($this->getColumns() as $column) {
                 if (isset($column['rules'][$request])) {
-                    $rules .= '             \'data.attributes.'.$column['name']. '\' => \'' . $column['rules'][$request] . '\',' . PHP_EOL;
+                    $rules .= PHP_MARGIN.PHP_MARGIN.PHP_MARGIN.'\'data.attributes.' . $column['name'] . '\' => \'' . $column['rules'][$request] . '\',' . PHP_EOL;
                 }
             }
             $rules .= '        ]';
@@ -248,6 +259,7 @@ class GenerateJsonApi extends Command
         $customPath = $this->templateVars['customPath'];
         $singularName = $this->templateVars['modelName'];
         $path = base_path("tests/Feature/Api{$customPath}/");
+        $this->templateVars['FactoryFields'] = $this->getFactoryFields();
 
         $testTemplate = $this->makeTemplate('Tests/Feature/Test.php');
 
@@ -256,6 +268,81 @@ class GenerateJsonApi extends Command
         $this->writeToFile("$path{$singularName}ControllerTest.php", $testTemplate);
     }
 
+
+    /**
+     * Create the factory
+     *
+     * @param string $modelName
+     * @param string $tableName
+     */
+    protected function factory(string $modelName = '', string $tableName = ''): void
+    {
+        $model = ($modelName)?:$this->templateVars['modelName'];
+        $path = base_path("database/factories");
+        $this->templateVars['FactoryFields'] = $this->getFactoryFields($tableName);
+        $factoryTemplate = $this->makeTemplate('Database/Factory.php');
+        $this->writeToFile("$path/{$model}Factory.php", $factoryTemplate);
+    }
+
+
+    /**
+     * Get fields with faker
+     *
+     * @param string $tableName
+     * @return string
+     */
+    protected function getFactoryFields(string $tableName = ''):string
+    {
+        $return = '';
+        foreach ($this->getColumns($tableName) as $column) {
+            if($column['rules'] && !$column['belongsTo']) {
+                $return .= PHP_MARGIN . '\'' . $column['name'] . '\' => ';
+                if (!$column['foreign'] && $column['name'] !== 'remember_token') $return .= '$this->faker->';
+                if ($column['unique']) $return .= 'unique()->';
+
+                if ($column['type'] === 'int') $return .= 'randomDigit';
+                else if ($column['type'] === 'datetime') $return .= 'dateTime';
+                else if ($column['type'] === 'text') $return .= 'word';
+                else if ($column['type'] === 'boolean') $return .= 'boolean()';
+                else if ($column['name'] === 'name') $return .= 'name';
+                else if ($column['name'] === 'email') $return .= 'email';
+                else if ($column['name'] === 'password') $return .= 'password';
+                else if ($column['name'] === 'title') $return .= 'title';
+                else if ($column['foreign']) {
+                    $return .= ' \\App\\Models\\' . $column['belongsTo']['model'] . '::first()->id';
+                } else if ($column['name'] === 'remember_token') {
+                    $return .= ' Str::random(10)';
+                } else
+                    $return .= (substr($return, -2) === '->' ? 'word' : '');
+
+                $return .= ',' . PHP_EOL . '        ';
+            }
+        }
+        return $return;
+    }
+
+    /**
+     * Create the seed
+     *
+     */
+    protected function seed(): void
+    {
+        $callSeeder = '';
+
+        foreach ($this->getColumns() as $column) {
+            if ($column['foreign']) {
+                $select = explode(".", $column['foreign']);
+                $callSeeder .= '$this->call(' . ucfirst($select[0]) . 'TableSeeder::class);' . PHP_EOL . '        ';
+                $this->factory(ucfirst($select[0]), $select[0]);
+            }
+        };
+
+        $modelNamePlural = $this->templateVars['modelNamePlural'];
+        $path = base_path("database/seeders");
+        $this->templateVars['callSeeder'] = $callSeeder;
+        $factoryTemplate = $this->makeTemplate('Database/Seed.php');
+        $this->writeToFile("$path/{$modelNamePlural}TableSeeder.php", $factoryTemplate);
+    }
 
     /**
      * Create the routes
@@ -317,8 +404,14 @@ class GenerateJsonApi extends Command
                     'required' => boolval(Schema::getConnection()->getDoctrineColumn($tableName, $column)->getNotnull()),
                     'unique' => $unique,
                     'foreign' => $forKey,
+                    'belongsTo' => null,
+                    'rules' => null
                 ];
 
+                if (stristr($result[$column]['name'], "_id")) {
+                    $result[$column]['belongsTo']['name'] = Str::camel(str_replace("_id", "", $column));
+                    $result[$column]['belongsTo']['model'] = ucfirst(Str::camel($result[$column]['belongsTo']['name']));
+                }
 
                 if (!in_array($column, $excludedColumns)) {
                     $result[$column]['rules'] = [

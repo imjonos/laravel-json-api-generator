@@ -1,4 +1,4 @@
-# Laravel Json Api Generator 0.1a
+# Laravel Json Api Generator 0.2a
 
 [![Latest Version on Packagist][ico-version]][link-packagist]
 [![Total Downloads][ico-downloads]][link-downloads]

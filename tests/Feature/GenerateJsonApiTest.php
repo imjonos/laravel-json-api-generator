@@ -14,15 +14,17 @@ class GenerateJsonApiTest extends TestCase
      */
     public function testGenerate()
     {
-        $this->artisan('jsonApi:generate', ['table' => 'posts', '--force' => 0]);
-        $this->assertFileExists(app_path("Http/Controllers/Api/V1/").'PostController.php');
-        $this->assertFileExists(app_path("Http/Resources/Api/V1/Post/").'PostIdentifierResource.php');
-        $this->assertFileExists(app_path("Http/Resources/Api/V1/Post/").'PostRelationshipResource.php');
-        $this->assertFileExists(app_path("Http/Resources/Api/V1/Post/").'PostResource.php');
-        $this->assertFileExists(app_path("Http/Resources/Api/V1/Post/").'PostsResource.php');
-        $this->assertFileExists(app_path("Http/Requests/Api/V1/Post/").'IndexRequest.php');
-        $this->assertFileExists(app_path("Http/Requests/Api/V1/Post/").'StoreRequest.php');
-        $this->assertFileExists(app_path("Http/Requests/Api/V1/Post/").'UpdateRequest.php');
-        $this->assertFileExists(base_path("tests/Feature/Api/V1/").'PostControllerTest.php');
+        $this->artisan('json-api:generate', ['table' => 'users', '--force' => 1]);
+        $this->assertFileExists(app_path("Http/Controllers/Api/V1/").'UserController.php');
+        $this->assertFileExists(app_path("Http/Resources/Api/V1/User/").'UserIdentifierResource.php');
+        $this->assertFileExists(app_path("Http/Resources/Api/V1/User/").'UserRelationshipResource.php');
+        $this->assertFileExists(app_path("Http/Resources/Api/V1/User/").'UserResource.php');
+        $this->assertFileExists(app_path("Http/Resources/Api/V1/User/").'UsersResource.php');
+        $this->assertFileExists(app_path("Http/Requests/Api/V1/User/").'IndexRequest.php');
+        $this->assertFileExists(app_path("Http/Requests/Api/V1/User/").'StoreRequest.php');
+        $this->assertFileExists(app_path("Http/Requests/Api/V1/User/").'UpdateRequest.php');
+        $this->assertFileExists(base_path("tests/Feature/Api/V1/").'UserControllerTest.php');
+        $this->assertFileExists(base_path("database/factories/").'UserFactory.php');
+        $this->assertFileExists(base_path("database/seeders/").'UsersTableSeeder.php');
     }
 }

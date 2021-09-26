@@ -1,22 +1,127 @@
 <?php
-
 namespace Tests\Feature\Api{{namespacePath}};
 
-use Tests\TestCase;
+use Nos\JsonApiGenerator\Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithoutMiddleware;
+use Illuminate\Foundation\Testing\WithFaker;
+use App\Models\{{modelName}};
 
 class {{modelName}}ControllerTest extends TestCase
 {
-    use WithoutMiddleware;
+    use RefreshDatabase, WithFaker;
 
     /**
-     * {{modelName}}Controller@index test
-     *
-     * @return void
+    * @var {{modelName}}
+    */
+    protected {{modelName}} ${{modelNameLowerCase}};
+
+    /**
+     * Setup method
      */
-    public function testIndex()
-    {
-        $this->assertTrue(true);
-    }
+     protected function setUp(): void
+     {
+        parent::setUp();
+        $this->addApiClients();
+        $this->seed(\{{modelNamePlural}}TableSeeder::class);
+        $this->{{modelNameLowerCase}} = {{modelName}}::first();
+     }
+
+     /**
+      * {{modelName}}Controller@index test
+      *
+      * @return void
+      */
+      public function testIndex()
+      {
+         $this->assertTrue($this->{{modelNameLowerCase}} !== null);
+
+         $response = $this->APIRequest('get', route('api.{{modelNamePluralLowerCase}}.index', [
+            'page' => [
+               'number' => 1
+            ]
+         ]));
+         $response->assertStatus(200);
+         $response->assertJson([
+            'data' => [
+               [
+                   'type' => '{{modelNamePluralLowerCase}}'
+               ]
+            ]
+         ]);
+      }
+
+     /**
+      * {{modelName}}Controller@show test
+      *
+      * @return void
+      */
+      public function testShow()
+      {
+         $this->assertTrue($this->{{modelNameLowerCase}} !== null);
+         $response = $this->APIRequest('get', route('api.{{modelNamePluralLowerCase}}.show', ['{{modelNameLowerCase}}' => $this->{{modelNameLowerCase}}->id]));
+         $response->assertStatus(200);
+         $response->assertJson([
+           'data' => [
+               'type' => '{{modelNamePluralLowerCase}}',
+               'id' => $this->{{modelNameLowerCase}}->id
+           ]
+         ]);
+      }
+
+     /**
+      * {{modelName}}Controller@update test
+      *
+      * @return void
+      */
+      public function testUpdate()
+      {
+           $this->assertTrue($this->{{modelNameLowerCase}} !== null);
+
+           $data = [
+               'data' => [
+                   'id' => (string)$this->{{modelNameLowerCase}}->id,
+                   'type' => '{{modelNamePluralLowerCase}}',
+                   'attributes' => [
+                   {{FactoryFields}}
+                   ]
+               ]
+           ];
+           $response = $this->APIRequest('patch', route('api.{{modelNamePluralLowerCase}}.update', ['{{modelNameLowerCase}}' => $this->{{modelNameLowerCase}}->id]), $data);
+           $response->assertStatus(200);
+           $response->assertJson($data);
+      }
+
+      /**
+       * {{modelName}}Controller@store test
+       *
+       * @return void
+       */
+       public function testStore()
+       {
+          $data = [
+             'data' => [
+                'type' => '{{modelNamePluralLowerCase}}',
+                'attributes' => [
+             {{FactoryFields}}
+                ]
+            ]
+         ];
+         $response = $this->APIRequest('post', route('api.{{modelNamePluralLowerCase}}.store'), $data);
+         $response->assertStatus(204);
+         $this->assertDatabaseHas('{{modelNamePluralLowerCase}}', array_merge($data['data']['attributes'], ['oauth_client_id' => 3]));
+      }
+
+      /**
+       * {{modelName}}Controller@destroy test
+       *
+       * @return void
+       */
+       public function testDestroy()
+       {
+           $this->assertTrue($this->{{modelNameLowerCase}} !== null);
+           $response = $this->APIRequest('get', route('api.{{modelNamePluralLowerCase}}.destroy', ['{{modelNameLowerCase}}' => $this->{{modelNameLowerCase}}->id]));
+           $response->assertStatus(204);
+       }
+
 }
