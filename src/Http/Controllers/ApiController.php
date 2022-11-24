@@ -2,25 +2,21 @@
 
 namespace Nos\JsonApiGenerator\Http\Controllers;
 
-use Nos\JsonApiGenerator\Exceptions\UnprocessableEntityException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Routing\Controller as BaseController;
+use Nos\JsonApiGenerator\Exceptions\UnprocessableEntityException;
 
 abstract class ApiController extends BaseController
 {
-    use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
+    use AuthorizesRequests;
+    use DispatchesJobs;
+    use ValidatesRequests;
 
     protected array $toOne;
     protected array $toMany;
-
-    /**
-     * Per page
-     * @var int
-     */
-    protected int $perPage = 10;
 
     /**
      * Set the array with Relationships
@@ -39,36 +35,6 @@ abstract class ApiController extends BaseController
     }
 
     /**
-     * Get the array with Relationships
-     *
-     * 'slots' => [
-     *      'class' => Slot::class,
-     *      'type' => 'slots'
-     *  ],
-     *
-     * @return array
-     */
-    public function getToManyRelationships(): array
-    {
-        return $this->toMany;
-    }
-
-    /**
-     * Get the array with Relationships
-     *
-     * 'user' => [
-     *       'class' => User::class,
-     *       'type' => 'users',
-     *       'key' => 'user_id'
-     * ],
-     *
-     */
-    public function getToOneRelationships(): array
-    {
-        return $this->toOne;
-    }
-
-    /**
      * Set the array with Relationships
      *
      * 'slots' => [
@@ -81,18 +47,6 @@ abstract class ApiController extends BaseController
     public function setToManyRelationships(array $array): void
     {
         $this->toMany = $array;
-    }
-
-    /**
-     * Get Validated Data from request
-     *
-     * @param FormRequest $request
-     * @return array
-     */
-    private function _getValidatedData(FormRequest $request): array
-    {
-        $validated = $request->validated();
-        return $validated['data'];
     }
 
     /**
@@ -113,7 +67,7 @@ abstract class ApiController extends BaseController
                     if (isset($relationship['data']) && is_array($relationship['data'])) {
                         $relationshipToOne = $toOne[$key];
                         $relationshipData = $relationship['data'];
-                        $id = (int)$relationshipData['id'];
+                        $id = (int) $relationshipData['id'];
                         if ($relationshipData['type'] !== $relationshipToOne['type']) {
                             throw new UnprocessableEntityException();
                         }
@@ -123,14 +77,42 @@ abstract class ApiController extends BaseController
                         } else {
                             throw new UnprocessableEntityException();
                         }
-
                     } else {
                         throw new UnprocessableEntityException();
                     }
                 }
             }
         }
+
         return $storeData;
+    }
+
+    /**
+     * Get the array with Relationships
+     *
+     * 'user' => [
+     *       'class' => User::class,
+     *       'type' => 'users',
+     *       'key' => 'user_id'
+     * ],
+     *
+     */
+    public function getToOneRelationships(): array
+    {
+        return $this->toOne;
+    }
+
+    /**
+     * Get Validated Data from request
+     *
+     * @param FormRequest $request
+     * @return array
+     */
+    private function _getValidatedData(FormRequest $request): array
+    {
+        $validated = $request->validated();
+
+        return $validated['data'];
     }
 
     /**
@@ -141,7 +123,6 @@ abstract class ApiController extends BaseController
      */
     protected function getDataWithRelationshipsToMany(FormRequest $request): array
     {
-
         $toMany = $this->getToManyRelationships();
 
         $data = $this->_getValidatedData($request);
@@ -153,7 +134,7 @@ abstract class ApiController extends BaseController
                     if (isset($relationship['data']) && is_array($relationship['data'])) {
                         $relationshipToMany = $toMany[$key];
                         foreach ($relationship['data'] as $relationshipData) {
-                            $id = (int)$relationshipData['id'];
+                            $id = (int) $relationshipData['id'];
                             if ($relationshipData['type'] !== $relationshipToMany['type']) {
                                 throw new UnprocessableEntityException();
                             }
@@ -170,6 +151,22 @@ abstract class ApiController extends BaseController
                 }
             }
         }
+
         return $storeData;
+    }
+
+    /**
+     * Get the array with Relationships
+     *
+     * 'slots' => [
+     *      'class' => Slot::class,
+     *      'type' => 'slots'
+     *  ],
+     *
+     * @return array
+     */
+    public function getToManyRelationships(): array
+    {
+        return $this->toMany;
     }
 }

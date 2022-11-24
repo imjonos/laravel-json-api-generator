@@ -2,6 +2,7 @@
 
 namespace Nos\JsonApiGenerator\Http\Resources;
 
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
@@ -32,10 +33,46 @@ abstract class ApiResource extends JsonResource
     private array $_resourceRelationships = [];
 
     /**
+     * Transform the resource into an array.
+     *
+     * @param Request $request
+     * @return array
+     */
+    public function toArray($request): array
+    {
+        return $this->getDataArray();
+    }
+
+    /**
+     * Create result data resource array
+     * @return array
+     */
+
+    protected function getDataArray(): array
+    {
+        $data = [
+            'type' => $this->_resourceType,
+            'id' => (string) $this->id
+        ];
+
+        if (count($this->_resourceAttributes)) {
+            $data['attributes'] = $this->_resourceAttributes;
+        }
+        if (count($this->_resourceLinks)) {
+            $data['links'] = $this->_resourceLinks;
+        }
+        if (count($this->_resourceRelationships)) {
+            $data['relationships'] = $this->_resourceRelationships;
+        }
+
+        return $data;
+    }
+
+    /**
      * Set type of resource
      * @param string $type
      */
-    protected function setType(string $type = ''):void
+    protected function setType(string $type = ''): void
     {
         $this->_resourceType = $type;
     }
@@ -44,57 +81,26 @@ abstract class ApiResource extends JsonResource
      * Set attributes of resource
      * @param array $attributes
      */
-    protected function setAttributes(array $attributes = []):void
+    protected function setAttributes(array $attributes = []): void
     {
         $this->_resourceAttributes = $attributes;
     }
 
     /**
      * Set links of resource
-     * @param array links
+     * @param array $links
      */
-    protected function setLinks(array $links = []):void
+    protected function setLinks(array $links = []): void
     {
         $this->_resourceLinks = $links;
     }
 
     /**
      * Set relationships of resource
-     * @param array relationships
+     * @param array $relationships
      */
-    protected function setRelationships(array $relationships = []):void
+    protected function setRelationships(array $relationships = []): void
     {
         $this->_resourceRelationships = $relationships;
-    }
-
-
-    /**
-     * Create result data resource array
-     * @return array
-     */
-
-    protected function getDataArray():array
-    {
-        $data = [
-            'type' => $this->_resourceType,
-            'id' => (string)$this->id
-        ];
-
-        if(count($this->_resourceAttributes)) $data['attributes'] = $this->_resourceAttributes;
-        if(count($this->_resourceLinks)) $data['links'] = $this->_resourceLinks;
-        if(count($this->_resourceRelationships)) $data['relationships'] = $this->_resourceRelationships;
-
-        return $data;
-    }
-
-    /**
-     * Transform the resource into an array.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return array
-     */
-    public function toArray($request)
-    {
-        return $this->getDataArray();
     }
 }
