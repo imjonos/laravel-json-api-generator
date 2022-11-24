@@ -1,0 +1,18 @@
+<?php
+
+namespace App\Services;
+
+use Nos\BaseService\BaseService;
+use App\Models\{{modelName}};
+use App\Interfaces\Repositories\{{modelName}}RepositoryInterface;
+
+/**
+ * @method {{modelName}}RepositoryInterface getRepository()
+ * @method {{modelName}} create(array $data)
+ * @method {{modelName}} updateOrCreate(array $attributes, array $data)
+ * @method {{modelName}} find(int $modelId)
+ */
+final class {{modelName}}Service extends BaseService
+{
+    protected string $repositoryClass = {{modelName}}RepositoryInterface::class;
+}

@@ -2,11 +2,13 @@
 
 namespace Nos\JsonApiGenerator\Console\Commands;
 
+use Doctrine\DBAL\Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 /**
  * PHP LEFT MARGIN
@@ -69,9 +71,10 @@ class GenerateJsonApi extends Command
     /**
      * Execute the console command.
      *
-     * @return mixed
+     * @return void
+     * @throws Exception
      */
-    public function handle()
+    public function handle(): void
     {
         $this->tableName = Str::lower($this->argument('table'));
         $this->route = $this->option('route');
@@ -97,6 +100,12 @@ class GenerateJsonApi extends Command
         ];
 
         $this->info('Json Api Generator');
+        $this->info('Creating model...');
+        Artisan::call('make:model', ['name' => $modelName]);
+        $this->info('Creating service...');
+        $this->service();
+        $this->info('Creating repository...');
+        $this->repository();
         $this->info('Creating controller...');
         $this->controller();
         $this->info('Creating requests...');
@@ -112,30 +121,24 @@ class GenerateJsonApi extends Command
         $this->info('Creating seed...');
         $this->seed();
         $this->info('Done');
-
     }
 
     /**
-     * Read the template
-     * @param $type
-     * @return false|string
+     * Create the service
+     * @param string $name
      */
-    protected function getStub(string $type)
+    protected function service(): void
     {
-        return File::get(__DIR__ . "/../../../resources/stubs/$type.stub");
-    }
-
-    /**
-     * Write to file
-     * @param string $path
-     * @param string $content
-     * @param bool $overwrite
-     */
-    protected function writeToFile(string $path, string $content, $overwrite = false): void
-    {
-        if ($this->force == 1 || !file_exists($path) || $overwrite) {
-            File::put($path, $content);
+        $name = $this->templateVars['modelName'];
+        if (!file_exists($path = app_path('/Services'))) {
+            mkdir($path, 0755, true);
         }
+
+        $template = $this->makeTemplate('Services/Service');
+        $this->writeToFile(
+            app_path("Services/{$name}Service.php"),
+            $template
+        );
     }
 
     /**
@@ -161,6 +164,61 @@ class GenerateJsonApi extends Command
     }
 
     /**
+     * Read the template
+     * @param string $type
+     * @return string
+     */
+    protected function getStub(string $type): string
+    {
+        return File::get(__DIR__ . "/../../../resources/stubs/$type.stub");
+    }
+
+    /**
+     * Write to file
+     * @param string $path
+     * @param string $content
+     * @param bool $overwrite
+     */
+    protected function writeToFile(string $path, string $content, bool $overwrite = false): void
+    {
+        if ($this->force == 1 || !file_exists($path) || $overwrite) {
+            File::put($path, $content);
+        }
+    }
+
+    /**
+     * Create the repository
+     * @param string $name
+     */
+    protected function repository(): void
+    {
+        $name = $this->templateVars['modelName'];
+        if (!file_exists($path = app_path('/Interfaces'))) {
+            mkdir($path, 0755, true);
+        }
+
+        if (!file_exists($path = app_path('/Interfaces/Repositories'))) {
+            mkdir($path, 0755, true);
+        }
+
+        if (!file_exists($path = app_path('/Repositories'))) {
+            mkdir($path, 0755, true);
+        }
+
+        $template = $this->makeTemplate('Interfaces/RepositoryInterface');
+        $this->writeToFile(
+            app_path("Interfaces/Repositories/{$name}RepositoryInterface.php"),
+            $template
+        );
+
+        $template = $this->makeTemplate('Repositories/Repository');
+        $this->writeToFile(
+            app_path("Repositories/{$name}Repository.php"),
+            $template
+        );
+    }
+
+    /**
      * Create the controller
      */
     protected function controller(): void
@@ -171,45 +229,10 @@ class GenerateJsonApi extends Command
 
         $controllerTemplate = $this->makeTemplate('Http/Controllers/Controller.php');
 
-        if (!file_exists($path))
+        if (!file_exists($path)) {
             mkdir($path, 0755, true);
+        }
         $this->writeToFile("$path{$singularName}Controller.php", $controllerTemplate);
-    }
-
-    /**
-     * Generate resources
-     */
-    protected function resources(): void
-    {
-        $modelName = $this->templateVars['modelName'];
-        $modelNamePlural = $this->templateVars['modelNamePlural'];
-        $customPath = $this->templateVars['customPath'];
-
-        $resources = [
-            'ModelIdentifierResource' => $modelName . 'IdentifierResource',
-            'ModelRelationshipResource' => $modelName . 'RelationshipResource',
-            'ModelResource' => $modelName . 'Resource',
-            'ModelsResource' => $modelNamePlural . 'Resource'
-        ];
-
-        $path = app_path("Http/Resources/Api{$customPath}/{$modelName}/");
-
-        if (!file_exists($path))
-            mkdir($path, 0755, true);
-
-        $attributes = '';
-        foreach ($this->getColumns() as $column) {
-            if ($column['name'] !== 'id') {
-                $attributes .= PHP_MARGIN.PHP_MARGIN.PHP_MARGIN.'\'' . $column['name'] . '\' => $this->' . $column['name'] . ',' . PHP_EOL;
-            }
-        }
-
-        $this->templateVars['attributes'] = $attributes;
-
-        foreach ($resources as $key => $resource) {
-            $template = $this->makeTemplate("Http/Resources/{$key}.php");
-            $this->writeToFile($path . $resource . ".php", $template);
-        }
     }
 
     /**
@@ -228,19 +251,22 @@ class GenerateJsonApi extends Command
 
         $path = app_path("Http/Requests/Api{$customPath}/{$modelName}/");
 
-        if (!file_exists($path))
+        if (!file_exists($path)) {
             mkdir($path, 0755, true);
+        }
 
         foreach ($requests as $request) {
             $rules = '[' . PHP_EOL;
-            $rules .= PHP_MARGIN.PHP_MARGIN.PHP_MARGIN.'\'data\' => \'required|array\',' . PHP_EOL;
-            $rules .= PHP_MARGIN.PHP_MARGIN.PHP_MARGIN.'\'data.type\' => [\'required\', Rule::in([\'' . $this->tableName . '\'])],' . PHP_EOL;
-            if($request !== 'StoreRequest') $rules .= PHP_MARGIN.PHP_MARGIN.PHP_MARGIN.'\'data.id\' => \'integer\',' . PHP_EOL;
-            $rules .= PHP_MARGIN.PHP_MARGIN.PHP_MARGIN.'\'data.attributes\' => \'array\',' . PHP_EOL;
+            $rules .= PHP_MARGIN . PHP_MARGIN . PHP_MARGIN . '\'data\' => \'required|array\',' . PHP_EOL;
+            $rules .= PHP_MARGIN . PHP_MARGIN . PHP_MARGIN . '\'data.type\' => [\'required\', Rule::in([\'' . $this->tableName . '\'])],' . PHP_EOL;
+            if ($request !== 'StoreRequest') {
+                $rules .= PHP_MARGIN . PHP_MARGIN . PHP_MARGIN . '\'data.id\' => \'integer\',' . PHP_EOL;
+            }
+            $rules .= PHP_MARGIN . PHP_MARGIN . PHP_MARGIN . '\'data.attributes\' => \'array\',' . PHP_EOL;
 
             foreach ($this->getColumns() as $column) {
                 if (isset($column['rules'][$request])) {
-                    $rules .= PHP_MARGIN.PHP_MARGIN.PHP_MARGIN.'\'data.attributes.' . $column['name'] . '\' => \'' . $column['rules'][$request] . '\',' . PHP_EOL;
+                    $rules .= PHP_MARGIN . PHP_MARGIN . PHP_MARGIN . '\'data.attributes.' . $column['name'] . '\' => \'' . $column['rules'][$request] . '\',' . PHP_EOL;
                 }
             }
             $rules .= '        ]';
@@ -252,135 +278,19 @@ class GenerateJsonApi extends Command
     }
 
     /**
-     * Create the controller test
-     */
-    protected function test(): void
-    {
-        $customPath = $this->templateVars['customPath'];
-        $singularName = $this->templateVars['modelName'];
-        $path = base_path("tests/Feature/Api{$customPath}/");
-        $this->templateVars['FactoryFields'] = $this->getFactoryFields();
-
-        $testTemplate = $this->makeTemplate('Tests/Feature/Test.php');
-
-        if (!file_exists($path))
-            mkdir($path, 0755, true);
-        $this->writeToFile("$path{$singularName}ControllerTest.php", $testTemplate);
-    }
-
-
-    /**
-     * Create the factory
-     *
-     * @param string $modelName
-     * @param string $tableName
-     */
-    protected function factory(string $modelName = '', string $tableName = ''): void
-    {
-        $model = ($modelName)?:$this->templateVars['modelName'];
-        $path = base_path("database/factories");
-        $this->templateVars['FactoryFields'] = $this->getFactoryFields($tableName);
-        $factoryTemplate = $this->makeTemplate('Database/Factory.php');
-        $this->writeToFile("$path/{$model}Factory.php", $factoryTemplate);
-    }
-
-
-    /**
-     * Get fields with faker
-     *
-     * @param string $tableName
-     * @return string
-     */
-    protected function getFactoryFields(string $tableName = ''):string
-    {
-        $return = '';
-        foreach ($this->getColumns($tableName) as $column) {
-            if($column['rules'] && !$column['belongsTo']) {
-                $return .= PHP_MARGIN . '\'' . $column['name'] . '\' => ';
-                if (!$column['foreign'] && $column['name'] !== 'remember_token') $return .= '$this->faker->';
-                if ($column['unique']) $return .= 'unique()->';
-
-                if ($column['type'] === 'int') $return .= 'randomDigit';
-                else if ($column['type'] === 'datetime') $return .= 'dateTime';
-                else if ($column['type'] === 'text') $return .= 'word';
-                else if ($column['type'] === 'boolean') $return .= 'boolean()';
-                else if ($column['name'] === 'name') $return .= 'name';
-                else if ($column['name'] === 'email') $return .= 'email';
-                else if ($column['name'] === 'password') $return .= 'password';
-                else if ($column['name'] === 'title') $return .= 'title';
-                else if ($column['foreign']) {
-                    $return .= ' \\App\\Models\\' . $column['belongsTo']['model'] . '::first()->id';
-                } else if ($column['name'] === 'remember_token') {
-                    $return .= ' Str::random(10)';
-                } else
-                    $return .= (substr($return, -2) === '->' ? 'word' : '');
-
-                $return .= ',' . PHP_EOL . '        ';
-            }
-        }
-        return $return;
-    }
-
-    /**
-     * Create the seed
-     *
-     */
-    protected function seed(): void
-    {
-        $callSeeder = '';
-
-        foreach ($this->getColumns() as $column) {
-            if ($column['foreign']) {
-                $select = explode(".", $column['foreign']);
-                $callSeeder .= '$this->call(' . ucfirst($select[0]) . 'TableSeeder::class);' . PHP_EOL . '        ';
-                $this->factory(ucfirst($select[0]), $select[0]);
-            }
-        };
-
-        $modelNamePlural = $this->templateVars['modelNamePlural'];
-        $path = base_path("database/seeders");
-        $this->templateVars['callSeeder'] = $callSeeder;
-        $factoryTemplate = $this->makeTemplate('Database/Seed.php');
-        $this->writeToFile("$path/{$modelNamePlural}TableSeeder.php", $factoryTemplate);
-    }
-
-    /**
-     * Create the routes
-     */
-    protected function routes(): void
-    {
-        $namespacePath = $this->templateVars['namespacePath'];
-        $modelName = $this->templateVars['modelName'];
-        $modelNameLowerCase = $this->templateVars['modelNameLowerCase'];
-        $route = $this->route . "/" . $this->tableName;
-        $routesPath = base_path('routes/api.php');
-
-        $routesFile = File::get($routesPath);
-
-        $routes = [
-            "Route::pattern('{$modelNameLowerCase}', '[0-9]+');",
-            "Route::resource('" . $route . "', \App\Http\Controllers\Api" . $namespacePath . "\\" . $modelName . "Controller::class, ['except'=> ['edit', 'create']]);",
-        ];
-
-        foreach ($routes as $route) {
-            if (!stristr($routesFile, $route)) {
-                File::append($routesPath, $route . PHP_EOL);
-            }
-        }
-    }
-
-
-    /**
      * Get columns list from db
      *
      * @param string $tableName
      * @return Collection
+     * @throws Exception
      */
     protected function getColumns(string $tableName = ""): Collection
     {
         if (!$this->columns) {
             $excludedColumns = ['id', 'created_at', 'updated_at', 'deleted_at', 'remember_token'];
-            if (!$tableName) $tableName = $this->tableName;
+            if (!$tableName) {
+                $tableName = $this->tableName;
+            }
             $indexes = collect(Schema::getConnection()->getDoctrineSchemaManager()->listTableIndexes($tableName));
             $foreign = Schema::getConnection()->getDoctrineSchemaManager()->listTableForeignKeys($tableName);
             $columns = Schema::getColumnListing($tableName);
@@ -401,7 +311,9 @@ class GenerateJsonApi extends Command
                 $result[$column] = [
                     'name' => $column,
                     'type' => Schema::getColumnType($tableName, $column),
-                    'required' => boolval(Schema::getConnection()->getDoctrineColumn($tableName, $column)->getNotnull()),
+                    'required' => boolval(
+                        Schema::getConnection()->getDoctrineColumn($tableName, $column)->getNotnull()
+                    ),
                     'unique' => $unique,
                     'foreign' => $forKey,
                     'belongsTo' => null,
@@ -422,6 +334,7 @@ class GenerateJsonApi extends Command
             }
             $this->columns = collect($result);
         }
+
         return $this->columns;
     }
 
@@ -439,42 +352,15 @@ class GenerateJsonApi extends Command
         } else {
             $result[] = 'nullable';
         }
-        if ($column['name'] == 'email') {
+
+        if ($column['name'] === 'email') {
             $result[] = 'email';
-        }
-        if ($column['name'] == 'password') {
+        } elseif ($column['name'] === 'password') {
             $result[] = 'min:7|confirmed|regex:/^.*(?=.{3,})(?=.*[a-zA-Z])(?=.*[0-9]).*$/';
         }
+
         if ($column['unique'] || $column['name'] == 'slug') {
             $result[] = 'unique:' . $this->tableName . ',' . $column['name'];
-        }
-        $result = $this->getTypeSpecificRules($column, $result);
-
-        return implode('|', $result);
-    }
-
-    /**
-     *  Generate rules Update action
-     *
-     * @param $column array
-     * @return string
-     */
-    protected function generateUpdateRules(array $column): string
-    {
-        $result = [];
-        if ($column['required']) {
-            $result[] = 'sometimes';
-        } else {
-            $result[] = 'nullable';
-        }
-        if ($column['name'] == 'email') {
-            $result[] = 'email';
-        }
-        if ($column['name'] == 'password') {
-            $result[] = 'min:7|confirmed|regex:/^.*(?=.{3,})(?=.*[a-zA-Z])(?=.*[0-9]).*$/';
-        }
-        if ($column['unique'] || $column['name'] == 'slug') {
-            $result[] = 'unique:' . $this->tableName . ',' . $column['name'] . ',\' . $this->id .\'';
         }
         $result = $this->getTypeSpecificRules($column, $result);
 
@@ -518,19 +404,219 @@ class GenerateJsonApi extends Command
         ];
         if (in_array($column['type'], $integerTypes)) {
             $rules[] = 'integer';
-        } else if (in_array($column['type'], $numericTypes)) {
+        } elseif (in_array($column['type'], $numericTypes)) {
             $rules[] = 'numeric';
-        } else if (in_array($column['type'], $datetimeTypes)) {
+        } elseif (in_array($column['type'], $datetimeTypes)) {
             $rules[] = 'date_format:Y-m-d H:i:s';
-        } else if (in_array($column['type'], $stringTypes)) {
+        } elseif (in_array($column['type'], $stringTypes)) {
             $rules[] = 'string';
-        } else if ($column['type'] === 'time') {
+        } elseif ($column['type'] === 'time') {
             $rules[] = 'date_format:H:i:s';
-        } else if ($column['type'] === 'boolean') {
+        } elseif ($column['type'] === 'boolean') {
             $rules[] = 'boolean';
         } else {
             $rules[] = 'string';
         }
+
         return $rules;
+    }
+
+    /**
+     *  Generate rules Update action
+     *
+     * @param $column array
+     * @return string
+     */
+    protected function generateUpdateRules(array $column): string
+    {
+        $result = [];
+        if ($column['required']) {
+            $result[] = 'sometimes';
+        } else {
+            $result[] = 'nullable';
+        }
+        if ($column['name'] == 'email') {
+            $result[] = 'email';
+        }
+        if ($column['name'] == 'password') {
+            $result[] = 'min:7|confirmed|regex:/^.*(?=.{3,})(?=.*[a-zA-Z])(?=.*[0-9]).*$/';
+        }
+        if ($column['unique'] || $column['name'] == 'slug') {
+            $result[] = 'unique:' . $this->tableName . ',' . $column['name'] . ',\' . $this->id .\'';
+        }
+        $result = $this->getTypeSpecificRules($column, $result);
+
+        return implode('|', $result);
+    }
+
+    /**
+     * Generate resources
+     * @throws Exception
+     */
+    protected function resources(): void
+    {
+        $modelName = $this->templateVars['modelName'];
+        $modelNamePlural = $this->templateVars['modelNamePlural'];
+        $customPath = $this->templateVars['customPath'];
+
+        $resources = [
+            'ModelIdentifierResource' => $modelName . 'IdentifierResource',
+            'ModelRelationshipResource' => $modelName . 'RelationshipResource',
+            'ModelResource' => $modelName . 'Resource',
+            'ModelsResource' => $modelNamePlural . 'Resource'
+        ];
+
+        $path = app_path("Http/Resources/Api{$customPath}/{$modelName}/");
+
+        if (!file_exists($path)) {
+            mkdir($path, 0755, true);
+        }
+
+        $attributes = '';
+        foreach ($this->getColumns() as $column) {
+            if ($column['name'] !== 'id') {
+                $attributes .= PHP_MARGIN . PHP_MARGIN . PHP_MARGIN . '\'' . $column['name'] . '\' => $this->' . $column['name'] . ',' . PHP_EOL;
+            }
+        }
+
+        $this->templateVars['attributes'] = $attributes;
+
+        foreach ($resources as $key => $resource) {
+            $template = $this->makeTemplate("Http/Resources/{$key}.php");
+            $this->writeToFile($path . $resource . ".php", $template);
+        }
+    }
+
+    /**
+     * Create the routes
+     */
+    protected function routes(): void
+    {
+        $namespacePath = $this->templateVars['namespacePath'];
+        $modelName = $this->templateVars['modelName'];
+        $modelNameLowerCase = $this->templateVars['modelNameLowerCase'];
+        $route = $this->route . "/" . $this->tableName;
+        $routesPath = base_path('routes/api.php');
+
+        $routesFile = File::get($routesPath);
+
+        $routes = [
+            "Route::pattern('{$modelNameLowerCase}', '[0-9]+');",
+            "Route::resource('" . $route . "', \App\Http\Controllers\Api" . $namespacePath . "\\" . $modelName . "Controller::class, ['except'=> ['edit', 'create']]);",
+        ];
+
+        foreach ($routes as $route) {
+            if (!stristr($routesFile, $route)) {
+                File::append($routesPath, $route . PHP_EOL);
+            }
+        }
+    }
+
+    /**
+     * Create the controller test
+     */
+    protected function test(): void
+    {
+        $customPath = $this->templateVars['customPath'];
+        $singularName = $this->templateVars['modelName'];
+        $path = base_path("tests/Feature/Api{$customPath}/");
+        $this->templateVars['FactoryFields'] = $this->getFactoryFields();
+
+        $testTemplate = $this->makeTemplate('Tests/Feature/Test.php');
+
+        if (!file_exists($path)) {
+            mkdir($path, 0755, true);
+        }
+        $this->writeToFile("$path{$singularName}ControllerTest.php", $testTemplate);
+    }
+
+    /**
+     * Get fields with faker
+     *
+     * @param string $tableName
+     * @return string
+     * @throws Exception
+     */
+    protected function getFactoryFields(string $tableName = ''): string
+    {
+        $return = '';
+        foreach ($this->getColumns($tableName) as $column) {
+            if ($column['rules'] && !$column['belongsTo']) {
+                $return .= PHP_MARGIN . '\'' . $column['name'] . '\' => ';
+                if (!$column['foreign'] && $column['name'] !== 'remember_token') {
+                    $return .= '$this->faker->';
+                }
+                if ($column['unique']) {
+                    $return .= 'unique()->';
+                }
+
+                if ($column['type'] === 'int') {
+                    $return .= 'randomDigit';
+                } elseif ($column['type'] === 'datetime') {
+                    $return .= 'dateTime';
+                } elseif ($column['type'] === 'text') {
+                    $return .= 'word';
+                } elseif ($column['type'] === 'boolean') {
+                    $return .= 'boolean()';
+                } elseif ($column['name'] === 'name') {
+                    $return .= 'name';
+                } elseif ($column['name'] === 'email') {
+                    $return .= 'email';
+                } elseif ($column['name'] === 'password') {
+                    $return .= 'password';
+                } elseif ($column['name'] === 'title') {
+                    $return .= 'title';
+                } elseif ($column['foreign']) {
+                    $return .= ' \\App\\Models\\' . $column['belongsTo']['model'] . '::first()->id';
+                } elseif ($column['name'] === 'remember_token') {
+                    $return .= ' Str::random(10)';
+                } else {
+                    $return .= (substr($return, -2) === '->' ? 'word' : '');
+                }
+
+                $return .= ',' . PHP_EOL . '        ';
+            }
+        }
+
+        return $return;
+    }
+
+    /**
+     * Create the factory
+     *
+     * @param string $modelName
+     * @param string $tableName
+     * @throws Exception
+     */
+    protected function factory(string $modelName = '', string $tableName = ''): void
+    {
+        $model = ($modelName) ?: $this->templateVars['modelName'];
+        $path = base_path("database/factories");
+        $this->templateVars['FactoryFields'] = $this->getFactoryFields($tableName);
+        $factoryTemplate = $this->makeTemplate('Database/Factory.php');
+        $this->writeToFile("$path/{$model}Factory.php", $factoryTemplate);
+    }
+
+    /**
+     * Create the seed
+     *
+     */
+    protected function seed(): void
+    {
+        $callSeeder = '';
+
+        foreach ($this->getColumns() as $column) {
+            if ($column['foreign']) {
+                $select = explode(".", $column['foreign']);
+                $callSeeder .= '$this->call(' . ucfirst($select[0]) . 'TableSeeder::class);' . PHP_EOL . '        ';
+                $this->factory(ucfirst($select[0]), $select[0]);
+            }
+        };
+
+        $modelNamePlural = $this->templateVars['modelNamePlural'];
+        $path = base_path("database/seeders");
+        $this->templateVars['callSeeder'] = $callSeeder;
+        $factoryTemplate = $this->makeTemplate('Database/Seed.php');
+        $this->writeToFile("$path/{$modelNamePlural}TableSeeder.php", $factoryTemplate);
     }
 }

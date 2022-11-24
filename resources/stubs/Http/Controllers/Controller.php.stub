@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api{{namespacePath}};
 use Illuminate\Pagination\Paginator;
 use Nos\JsonApiGenerator\Http\Controllers\ApiController;
 use {{modelsNamespace}}{{modelName}};
+use Illuminate\Support\Facades\DB;
+use App\Services\{{modelName}}Service;
 use App\Http\Requests\Api{{namespacePath}}\{{modelName}}\{
     IndexRequest,
     StoreRequest,
@@ -20,12 +22,12 @@ class {{modelName}}Controller extends ApiController
     /**
      * @var int
      */
-    public int $perPage = 10;
-    
-    
+    public const PAGE_LIMIT = 10;
+    private {{modelName}}Service ${{modelNameLowerCase}}Service;
+
     /**
      * {{modelName}}Controller constructor.
-     * 
+     *
      * Example of array
      * 'city' => [
      *     'class' => City::class,
@@ -33,10 +35,11 @@ class {{modelName}}Controller extends ApiController
      *     'key' => 'city_id'
      *  ]
      */
-    public function __construct()
+    public function __construct({{modelName}}Service ${{modelNameSingularLowerCase}}Service)
     {
         $this->setToOneRelationships([]);
         $this->setToManyRelationships([]);
+        $this->{{modelNameLowerCase}}Service = ${{modelNameSingularLowerCase}}Service;
     }
 
     /**
@@ -53,14 +56,10 @@ class {{modelName}}Controller extends ApiController
      */
     public function index(IndexRequest $request): {{modelNamePlural}}Resource
     {
-        $pageSize = $request->input('page.size', $this->perPage);
+        $pageSize = $request->input('page.size', self::PAGE_LIMIT);
         $pageNumber = $request->input('page.number', 1);
-        
-        Paginator::currentPageResolver(function () use ($pageNumber) {
-            return $pageNumber;
-        });
-        
-        $result =  {{modelName}}::paginate($pageSize);
+
+        $result = $this->{{modelNameLowerCase}}Service->paginate($pageNumber, $pageSize);
 
         return new {{modelNamePlural}}Resource($result);
     }
@@ -73,12 +72,14 @@ class {{modelName}}Controller extends ApiController
      */
     public function store(StoreRequest $request): \Illuminate\Http\JsonResponse
     {
-        $relationshipsToOne = $this->getDataWithRelationshipsToOne($request);
-        $relationshipsToMany = $this->getDataWithRelationshipsToMany($request);
-        ${{modelNameLowerCase}} = {{modelName}}::create($relationshipsToOne);
-        foreach ($relationshipsToMany AS $key => $relation){
-            ${{modelNameLowerCase}}->{$key}()->sync($relation);
-        }
+        DB::transaction(function () use ($request) {
+            $relationshipsToOne = $this->getDataWithRelationshipsToOne($request);
+            $relationshipsToMany = $this->getDataWithRelationshipsToMany($request);
+            ${{modelNameLowerCase}} = $this->{{modelNameLowerCase}}Service->create($relationshipsToOne);
+            foreach ($relationshipsToMany AS $key => $relation){
+                ${{modelNameLowerCase}}->{$key}()->sync($relation);
+            }
+        });
         return response()->json([], 204);
     }
 
@@ -102,13 +103,14 @@ class {{modelName}}Controller extends ApiController
      */
     public function update(UpdateRequest $request, {{modelName}} ${{modelNameLowerCase}}): {{modelName}}Resource
     {
-        $relationshipsToOne = $this->getDataWithRelationshipsToOne($request);
-        $relationshipsToMany = $this->getDataWithRelationshipsToMany($request);
-        ${{modelNameLowerCase}}->update($relationshipsToOne);
-        foreach ($relationshipsToMany AS $key => $relation){
-            $${{modelNameLowerCase}}->{$key}()->sync($relation);
-        }
-
+        DB::transaction(function () use ($request, ${{modelNameLowerCase}}) {
+            $relationshipsToOne = $this->getDataWithRelationshipsToOne($request);
+            $relationshipsToMany = $this->getDataWithRelationshipsToMany($request);
+            $this->{{modelNameLowerCase}}Service->update(${{modelNameLowerCase}}->id,$relationshipsToOne);
+            foreach ($relationshipsToMany AS $key => $relation){
+                $${{modelNameLowerCase}}->{$key}()->sync($relation);
+            }
+        });
         return new {{modelName}}Resource(${{modelNameLowerCase}}->fresh());
     }
 
@@ -120,7 +122,7 @@ class {{modelName}}Controller extends ApiController
      */
     public function destroy({{modelName}} ${{modelNameLowerCase}}): \Illuminate\Http\Response
     {
-        ${{modelNameLowerCase}}->delete();
+        $this->{{modelNameLowerCase}}Service->delete(${{modelNameLowerCase}}->id);
         return response()->json([], 204);
     }
 }
