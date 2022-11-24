@@ -35,11 +35,11 @@ class {{modelName}}Controller extends ApiController
      *     'key' => 'city_id'
      *  ]
      */
-    public function __construct({{modelName}}Service ${{modelNameSingularLowerCase}}Service)
+    public function __construct({{modelName}}Service ${{modelNameLowerCase}}Service)
     {
         $this->setToOneRelationships([]);
         $this->setToManyRelationships([]);
-        $this->{{modelNameLowerCase}}Service = ${{modelNameSingularLowerCase}}Service;
+        $this->{{modelNameLowerCase}}Service = ${{modelNameLowerCase}}Service;
     }
 
     /**

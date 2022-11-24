@@ -82,7 +82,7 @@ class GenerateJsonApi extends Command
 
         $modelNamePlural = ucfirst(Str::camel($this->tableName));
         $modelName = Str::singular($modelNamePlural);
-        $modelNameLowerCase = Str::lower($modelName);
+        $modelNameLowerCase = lcfirst($modelName);
         $pathName = ($this->route) ? ucfirst($this->route) : '';
         $namespacePath = ($pathName) ? '\\' . $pathName : '';
         $customPath = ($pathName) ? '/' . $pathName : '';
