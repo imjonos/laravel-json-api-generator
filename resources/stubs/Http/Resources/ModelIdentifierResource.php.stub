@@ -4,7 +4,7 @@ namespace App\Http\Resources\Api{{namespacePath}}\{{modelName}};
 use Nos\JsonApiGenerator\Http\Resources\ApiResource;
 use Illuminate\Http\Request;
 
-class {{modelName}}IdentifierResource extends ApiResource
+final class {{modelName}}IdentifierResource extends ApiResource
 {
     /**
      * Transform the resource into an array.

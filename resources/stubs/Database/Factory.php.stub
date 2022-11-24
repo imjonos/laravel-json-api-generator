@@ -11,7 +11,7 @@ use App\Models\{{modelName}};
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
-class {{modelName}}Factory extends Factory
+final class {{modelName}}Factory extends Factory
 {
     /**
      * The name of the factory's corresponding model.
@@ -32,4 +32,3 @@ class {{modelName}}Factory extends Factory
         ];
     }
 }
-

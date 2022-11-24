@@ -18,7 +18,7 @@ use App\Http\Resources\Api{{namespacePath}}\{{modelName}}\{
     {{modelNamePlural}}Resource
 };
 
-class {{modelName}}Controller extends ApiController
+final class {{modelName}}Controller extends ApiController
 {
     /**
      * @var int

@@ -7,7 +7,7 @@ use Illuminate\Foundation\Testing\WithoutMiddleware;
 use Illuminate\Foundation\Testing\WithFaker;
 use App\Models\{{modelName}};
 
-class {{modelName}}ControllerTest extends TestCase
+final class {{modelName}}ControllerTest extends TestCase
 {
     use RefreshDatabase, WithFaker;
 

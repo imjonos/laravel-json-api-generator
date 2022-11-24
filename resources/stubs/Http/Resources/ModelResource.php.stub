@@ -5,7 +5,7 @@ use Nos\JsonApiGenerator\Http\Resources\ApiResource;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
-class {{modelName}}Resource extends ApiResource
+final class {{modelName}}Resource extends ApiResource
 {
     /**
      * Transform the resource into an array.
