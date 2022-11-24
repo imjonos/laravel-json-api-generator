@@ -6,6 +6,7 @@ use Illuminate\Pagination\Paginator;
 use Nos\JsonApiGenerator\Http\Controllers\ApiController;
 use {{modelsNamespace}}{{modelName}};
 use Illuminate\Support\Facades\DB;
+use Illuminate\Http\JsonResponse
 use App\Services\{{modelName}}Service;
 use App\Http\Requests\Api{{namespacePath}}\{{modelName}}\{
     IndexRequest,
@@ -53,6 +54,7 @@ class {{modelName}}Controller extends ApiController
      *
      * @param IndexRequest $request
      * @return {{modelNamePlural}}Resource
+     * @throws BindingResolutionException
      */
     public function index(IndexRequest $request): {{modelNamePlural}}Resource
     {
@@ -68,9 +70,9 @@ class {{modelName}}Controller extends ApiController
      * Store a newly created resource in storage.
      *
      * @param  StoreRequest  $request
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
-    public function store(StoreRequest $request): \Illuminate\Http\JsonResponse
+    public function store(StoreRequest $request): JsonResponse
     {
         DB::transaction(function () use ($request) {
             $relationshipsToOne = $this->getDataWithRelationshipsToOne($request);
@@ -118,9 +120,10 @@ class {{modelName}}Controller extends ApiController
      * Remove the specified resource from storage.
      *
      * @param {{modelName}} ${{modelNameLowerCase}}
-     * @return \Illuminate\Http\Response
+     * @return JsonResponse
+     * @throws BindingResolutionException
      */
-    public function destroy({{modelName}} ${{modelNameLowerCase}}): \Illuminate\Http\Response
+    public function destroy({{modelName}} ${{modelNameLowerCase}}): JsonResponse
     {
         $this->{{modelNameLowerCase}}Service->delete(${{modelNameLowerCase}}->id);
         return response()->json([], 204);
