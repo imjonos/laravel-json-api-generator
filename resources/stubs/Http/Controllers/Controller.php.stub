@@ -110,7 +110,7 @@ class {{modelName}}Controller extends ApiController
             $relationshipsToMany = $this->getDataWithRelationshipsToMany($request);
             $this->{{modelNameLowerCase}}Service->update(${{modelNameLowerCase}}->id,$relationshipsToOne);
             foreach ($relationshipsToMany AS $key => $relation){
-                $${{modelNameLowerCase}}->{$key}()->sync($relation);
+                ${{modelNameLowerCase}}->{$key}()->sync($relation);
             }
         });
         return new {{modelName}}Resource(${{modelNameLowerCase}}->fresh());
