@@ -3,13 +3,14 @@
 namespace App\Repositories;
 
 use App\Interfaces\Repositories\{{modelName}}RepositoryInterface;
+use Nos\BaseRepository\EloquentRepository as BaseRepository;
 use App\Models\{{modelName}};
 
 /**
  * @method {{modelName}} find(int $id)
  * @method {{modelName}} create(array $data)
  */
-final class {{modelName}}Repository implements {{modelName}}RepositoryInterface
+final class {{modelName}}Repository extends BaseRepository implements {{modelName}}RepositoryInterface
 {
     protected string $class = {{modelName}}::class;
 }
