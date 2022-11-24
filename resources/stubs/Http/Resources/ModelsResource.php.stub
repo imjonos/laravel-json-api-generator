@@ -12,7 +12,7 @@ class {{modelNamePlural}}Resource extends ResourceCollection
      * @param  Request  $request
      * @return array
      */
-    public function toArray($request):array
+    public function toArray($request): array
     {
         return [
             'data' => {{modelName}}Resource::collection($this->collection),
@@ -23,7 +23,7 @@ class {{modelNamePlural}}Resource extends ResourceCollection
      * @param Request $request
      * @return array
      */
-    public function with($request)
+    public function with($request): array
     {
 
         return [
