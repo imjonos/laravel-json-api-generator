@@ -28,7 +28,7 @@ class {{modelNamePlural}}Resource extends ResourceCollection
 
         return [
             'links'    => [
-                'self' => route('{{modelNamePluralLowerCase}}.index'),
+                'self' => route('api.{{modelNamePluralLowerCase}}.index'),
             ]
         ];
     }

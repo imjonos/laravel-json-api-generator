@@ -21,7 +21,7 @@ class {{modelName}}Resource extends ApiResource
         //By default adding all attributes
         $this->setAttributes($attributes);
         $this->setLinks([
-            'self' => route('{{modelNamePluralLowerCase}}.show',['{{modelNameLowerCase}}' => $this->id])
+            'self' => route('api.{{modelNamePluralLowerCase}}.show',['{{modelNameLowerCase}}' => $this->id])
         ]);
 
         // later need to add relationships
