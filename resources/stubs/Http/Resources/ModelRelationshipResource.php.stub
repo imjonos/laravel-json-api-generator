@@ -26,7 +26,7 @@ class {{modelName}}RelationshipResource extends ResourceCollection
     {
         return [
             'links'    => [
-                'self' => route('api.{{modelNamePluralLowerCase}}.show',['{{modelNameLowerCase}}' => $this->id])
+                'self' => route('api.{{modelNamePluralLowerCase}}.show',['{{modelNameSingularUnderlineLowerCase}}' => $this->id])
             ],
         ];
     }

@@ -81,6 +81,7 @@ class GenerateJsonApi extends Command
         $this->force = $this->option('force');
 
         $modelNamePlural = ucfirst(Str::camel($this->tableName));
+        $modelNameSingularUnderlineLowerCase = Str::singular($this->tableName);
         $modelName = Str::singular($modelNamePlural);
         $modelNameLowerCase = lcfirst($modelName);
         $pathName = ($this->route) ? ucfirst($this->route) : '';
@@ -90,6 +91,7 @@ class GenerateJsonApi extends Command
 
         $this->templateVars = [
             'modelName' => $modelName,
+            'modelNameSingularUnderlineLowerCase' => $modelNameSingularUnderlineLowerCase,
             'modelNamePlural' => $modelNamePlural,
             'modelsNamespace' => $modelsNamespace,
             'modelNameLowerCase' => $modelNameLowerCase,

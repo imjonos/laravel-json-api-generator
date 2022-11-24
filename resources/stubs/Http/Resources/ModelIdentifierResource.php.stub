@@ -16,7 +16,7 @@ class {{modelName}}IdentifierResource extends ApiResource
         $this->setType('{{modelNamePluralLowerCase}}');
 
         $this->setLinks([
-            'self' => route('api.{{modelNamePluralLowerCase}}.show',['{{modelNameLowerCase}}' => $this->id])
+            'self' => route('api.{{modelNamePluralLowerCase}}.show',['{{modelNameSingularUnderlineLowerCase}}' => $this->id])
         ]);
         return parent::toArray($request);
     }
