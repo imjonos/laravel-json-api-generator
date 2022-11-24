@@ -592,9 +592,10 @@ class GenerateJsonApi extends Command
      */
     protected function factory(string $modelName = '', string $tableName = ''): void
     {
-        $model = ($modelName) ?: $this->templateVars['modelName'];
+        $model = $modelName ?: $this->templateVars['modelName'];
+        $table = $tableName ?: $this->tableName;
         $path = base_path("database/factories");
-        $this->templateVars['FactoryFields'] = $this->getFactoryFields($tableName);
+        $this->templateVars['FactoryFields'] = $this->getFactoryFields($table);
         $factoryTemplate = $this->makeTemplate('Database/Factory.php');
         $this->writeToFile("$path/{$model}Factory.php", $factoryTemplate);
     }
